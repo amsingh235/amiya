@@ -1,0 +1,47 @@
+/* ============================================================
+   ANIMATIONS.CSS — Scroll-triggered entrance animations
+   ============================================================ */
+
+/* ---- Base hidden states (applied in HTML via class) ---- */
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s ease;
+  transition-delay: var(--delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.65s ease;
+  transition-delay: var(--delay, 0ms);
+  will-change: opacity;
+}
+
+/* ---- Visible state — added by JS when element enters viewport ---- */
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-in.visible {
+  opacity: 1;
+}
+
+/* ---- Respect user's motion preference ---- */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .fade-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .skill-bar {
+    transition: none !important;
+  }
+}
