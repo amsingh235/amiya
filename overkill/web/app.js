@@ -1074,3 +1074,4 @@ function wire() {
 }
 
 boot();
+document.addEventListener("DOMContentLoaded", () => { const b = document.getElementById("hireBtn"); if (b && window.NYAY_CONTACT_URL) b.href = window.NYAY_CONTACT_URL; });

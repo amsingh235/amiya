@@ -165,6 +165,74 @@ def publish(root: Path = ROOT) -> None:
     rules = tomllib.loads((root / "pipelines" / "rules.toml").read_text(encoding="utf-8"))
     (web / "data" / "rules.json").write_text(json.dumps(rules, ensure_ascii=False), encoding="utf-8")
     (web / "data" / "taxonomy.json").write_text(json.dumps(TAXONOMY, ensure_ascii=False), encoding="utf-8")
+    (web / "data" / "kb.json").write_text(json.dumps(kb_from_markdown(root / "LEARN.md"), ensure_ascii=False), encoding="utf-8")
+
+
+def kb_from_markdown(path: Path) -> list[dict]:
+    """Split the guide into small retrievable blocks for Nyay: one paragraph, bullet, table row
+    (with its header) or command block per doc, titled by its section."""
+    import re
+    if not path.exists():
+        return []
+    docs: list[dict] = []
+    section, block, header, in_code, code = "Overview", [], None, False, []
+
+    def emit(text: str) -> None:
+        text = " ".join(text.split())
+        if section.lower() == "glossary" and text.count("**") > 2:  # one definition per doc
+            for part in re.split(r"(?=\*\*[^*]+:\*\*)", text):
+                if part.strip():
+                    docs.append({"id": f"glossary-{len(docs)}", "title": "Glossary", "text": part.strip()})
+            return
+        if len(text) >= 40:
+            slug = re.sub(r"[^a-z0-9]+", "-", section.lower()).strip("-")
+            docs.append({"id": f"{slug}-{len(docs)}", "title": section, "text": text[:900]})
+
+    def flush() -> None:
+        nonlocal block
+        if block:
+            emit(" ".join(block))
+        block = []
+
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        if line.startswith("```"):
+            if in_code:
+                emit("Commands: " + " ; ".join(c for c in code if c.strip()))
+                code = []
+            in_code = not in_code
+            continue
+        if in_code:
+            code.append(line.strip())
+            continue
+        m = re.match(r"^#{2,3}\s+(.*)", line)
+        if m:
+            flush()
+            section, header = re.sub(r"^[\d.]+\s*", "", m.group(1)).strip(), None
+            continue
+        if line.strip().startswith("|"):
+            flush()
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if all(re.fullmatch(r":?-{3,}:?", c) for c in cells if c):
+                continue
+            if header is None:
+                header = cells
+            else:
+                emit(" · ".join(f"{h}: {c}" if h else c for h, c in zip(header, cells)))
+            continue
+        if not line.strip():
+            header = None
+            flush()
+            continue
+        if line.strip() == "---":
+            flush()
+            continue
+        if re.match(r"^\s*([-*]|\d+\.)\s+", line):
+            flush()
+            line = re.sub(r"^\s*([-*]|\d+\.)\s+(\[ \]\s*)?", "", line)
+        block.append(line.strip().lstrip("> "))
+    flush()
+    return docs
 
 
 def run_pipeline(pid: str, *, split: str = "all", limit: int | None = None, fresh: bool = False,

@@ -21,7 +21,7 @@
       <span class="chips" id="chips"></span>
     </div>
     <nav class="nav" aria-label="Sections">
-      <a href="#ladder">Results</a><a href="#tco">Cost model</a><a href="#errors">Failure modes</a><a href="#ops">Console</a><a href="#critic">Critic</a><a href="#method">Method</a><a href="tutorial.html" class="nav-cta">Tutorial</a>
+      <a href="#ladder">Results</a><a href="#tco">Cost model</a><a href="#errors">Failure modes</a><a href="#ops">Console</a><a href="#critic">Critic</a><a href="#method">Method</a><a href="#hire">Hire</a><a href="tutorial.html" class="nav-cta">Tutorial</a>
     </nav>
     <div class="actions">
       <button class="icon-btn" id="searchBtn" title="Search policy and cases (/)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><kbd>/</kbd></button>
@@ -40,7 +40,7 @@
       <p class="lede">A rules engine, one LLM call, retrieval over written policy, and a three-agent graph classify the same hand-written disputes. One harness times every call and prices every token. The question is never “can AI do it” but <em>where the next step of sophistication pays for itself</em>.</p>
       <div class="finding" id="finding" aria-live="polite"></div>
       <div class="banner" id="seedBanner" hidden></div>
-      <div class="hero-ctas"><a class="btn primary" href="tutorial.html">Start the tutorial →</a><a class="btn" href="#ops">Try the console</a><span class="muted small">or press <kbd>T</kbd> to change theme · <kbd>/</kbd> to search</span></div>
+      <div class="hero-ctas"><a class="btn primary" href="tutorial.html">Start the tutorial →</a><a class="btn" href="#ops">Try the console</a><a class="btn" href="#nyay" data-open-nyay="">Ask Nyay</a><span class="muted small">or press <kbd>T</kbd> to change theme · <kbd>/</kbd> to search</span></div>
     </section>
 
     <section class="block" id="ladder" aria-labelledby="ladderTitle">
@@ -151,6 +151,28 @@
     </section>
   </main>
 
+  <section class="block hire-wrap" id="hire" aria-labelledby="hireTitle">
+    <div class="card hire">
+      <div class="hire-copy">
+        <p class="eyebrow">Hire the method</p>
+        <h2 id="hireTitle">About to spend lakhs on an “AI agent platform”? Know first.</h2>
+        <p class="lede">An <b>AI Build Decision Review</b> runs this exact method on <i>your</i> task: the cheapest thing that could work, measured against your own labelled cases, escalating only where your error cost pays for it.</p>
+        <div class="for-chips"><span class="chip">Founders with an agency quote they can't check</span><span class="chip">Ops leaders defending an AI line item to a CFO</span><span class="chip">AI agencies shipping without evals</span></div>
+      </div>
+      <ol class="deliverables">
+        <li><b>A labelled eval set</b><span>100–200 cases on your task, labelled blind with your team. Self-agreement measured.</span></li>
+        <li><b>2–4 approaches, cheapest first</b><span>Rules → one call → retrieval → agents, same harness, same model, real token costs.</span></li>
+        <li><b>A cost model with your numbers</b><span>Your volume, your cost of a wrong decision, your review cost. Break-even shown, in ₹ or $.</span></li>
+        <li><b>A one-page recommendation</b><span>Plus a live dashboard like this one, for the people who sign off.</span></li>
+      </ol>
+      <div class="hire-cta">
+        <div><b>Two weeks · fixed scope · fixed price.</b> No retainer, no hourly. The first two clients get an introductory rate in exchange for a named case study.</div>
+        <div class="hire-btns"><a class="btn primary" id="hireBtn" href="https://github.com/amsingh235" target="_blank" rel="noopener">Book a review ↗</a><a class="btn" href="#nyay" data-open-nyay="how does this make money">Ask Nyay about it</a></div>
+        <p class="footnote">I measure and recommend; I don't guarantee accuracy in your production system.</p>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">
     <span>Overkill · built by Amiya Manas Singh</span>
     <span id="footGen"></span>
@@ -158,10 +180,10 @@
 
   <!-- Autopilot: the virtual cursor and the operator log -->
   <div class="ap-frame" id="apFrame" aria-hidden="true"></div>
-  <div class="cursor" id="cursor" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.2L16 21l-3 1.4-3.6-7.6L4 19z"/></svg><span class="cursor-tag">Autopilot</span></div>
+  <div class="cursor" id="cursor" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.2L16 21l-3 1.4-3.6-7.6L4 19z"/></svg><span class="cursor-tag">Nyay</span></div>
   <aside class="aplog" id="apLog" aria-live="polite" hidden>
     <div class="aplog-head">
-      <span class="ap-dot live"></span><b>Autopilot</b><span class="muted">operating the console</span>
+      <span class="ap-dot live"></span><b>Nyay · Autopilot</b><span class="muted">operating the console</span>
       <button class="icon-btn small" id="apClose" title="Take back control (Esc)" aria-label="Stop autopilot"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="aplog-ctl">
@@ -181,5 +203,6 @@
   </dialog>
 
   <script src="app.js" defer></script>
+  <script src="nyay.js" defer></script>
 </body>
 </html>

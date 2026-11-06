@@ -491,3 +491,62 @@ kbd { border: 1px solid var(--line-strong); border-bottom-width: 2px; border-rad
 .chapter .check { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-weight: 600; cursor: pointer; }
 .chapter .check input { width: 18px; height: 18px; accent-color: var(--good); }
 @media (max-width: 860px) { .critic { grid-template-columns: 1fr; } .critic-score { position: static; } .beyond-stats { grid-template-columns: repeat(2, 1fr); } .theme-name { display: none; } }
+
+/* ================================================================== Nyay: the in-browser copilot */
+.nyay-launch { position: fixed; left: 16px; bottom: 16px; z-index: 75; display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow); cursor: pointer; font: inherit; transition: transform .15s; }
+.nyay-launch:hover { transform: translateY(-2px); }
+.nyay-label { display: grid; text-align: left; line-height: 1.15; }
+.nyay-label b { font: 600 13.5px var(--font-display); }
+.nyay-label small { font: 11px var(--font-mono); color: var(--text-muted); }
+.orb { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; position: relative; overflow: hidden;
+  background: conic-gradient(from 0deg, var(--p-rules), var(--accent), var(--ap), var(--p-single), var(--p-rules)); animation: orb 6s linear infinite; }
+.orb::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--surface-1) 30%, transparent), var(--p-agents) 120%); }
+.orb svg { position: relative; z-index: 1; width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; animation: orb 6s linear infinite reverse; }
+.orb.small { width: 30px; height: 30px; } .orb.small svg { width: 16px; height: 16px; }
+@keyframes orb { to { transform: rotate(360deg); } }
+.nyay { position: fixed; left: 16px; bottom: 76px; z-index: 76; width: min(400px, calc(100vw - 32px)); height: min(600px, calc(100vh - 120px)); display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--line-strong); border-radius: 18px; box-shadow: var(--shadow), 0 0 0 4px var(--accent-soft); overflow: hidden; animation: rise .25s ease both; }
+.nyay[hidden] { display: none; }
+.nyay-head { display: flex; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid var(--line); }
+.nyay-head .icon-btn { margin-left: auto; }
+.nyay-log { list-style: none; margin: 0; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.nyay-msg { max-width: 92%; padding: 10px 12px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; animation: rise .25s ease both; }
+.nyay-msg.bot { background: var(--surface-2); border-top-left-radius: 4px; align-self: flex-start; }
+.nyay-msg.you { background: var(--text-primary); color: var(--surface-1); border-top-right-radius: 4px; align-self: flex-end; }
+.nyay-msg p { margin: 6px 0 0; }
+.nyay-msg details { margin-top: 6px; } .nyay-msg summary { cursor: pointer; color: var(--accent); font-size: 12.5px; }
+.nyay-list { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.nyay-list .badge { width: 18px; height: 18px; font-size: 10px; border-radius: 5px; display: inline-grid; vertical-align: -3px; }
+.nyay-msg .badge { width: 18px; height: 18px; font-size: 10px; border-radius: 5px; display: inline-grid; vertical-align: -3px; }
+.nyay-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nyay-acts a.btn { text-decoration: none; }
+.nyay-chips { display: flex; gap: 6px; padding: 0 12px 8px; overflow-x: auto; scrollbar-width: none; }
+.chip-btn { flex: none; border: 1px solid var(--line-strong); background: var(--surface-1); color: var(--text-secondary); border-radius: 999px; padding: 5px 10px; font: 500 12px var(--font-body); cursor: pointer; white-space: nowrap; }
+.chip-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.nyay-form { display: flex; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--line); }
+.nyay-form .input { flex: 1; min-width: 0; }
+.dots { display: inline-flex; gap: 4px; padding: 2px 0; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: dot 1s infinite ease-in-out; }
+.dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+body.autopilot .nyay-launch, body.autopilot .nyay { display: none; }
+@media (max-width: 620px) {
+  .nyay { left: 8px; right: 8px; width: auto; bottom: 70px; height: calc(100vh - 90px); }
+  .nyay-label small { display: none; }
+}
+
+/* ================================================================== the offer */
+.hire-wrap { max-width: 1240px; margin: 48px auto 0; padding: 0 24px; }
+.hire { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px 32px; padding: 28px; background: linear-gradient(135deg, var(--surface-1), color-mix(in srgb, var(--accent) 7%, var(--surface-1))); }
+.hire h2 { font-size: clamp(24px, 3vw, 34px); line-height: 1.1; }
+.hire .lede { font-size: 15.5px; }
+.for-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.for-chips .chip { white-space: normal; font-family: var(--font-body); font-size: 12px; }
+.deliverables { margin: 0; padding: 0; list-style: none; counter-reset: d; display: grid; gap: 10px; }
+.deliverables li { counter-increment: d; display: grid; grid-template-columns: 30px 1fr; gap: 2px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-1); }
+.deliverables li::before { content: counter(d); grid-row: span 2; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 700 13px var(--font-display); }
+.deliverables span { font-size: 13px; color: var(--text-secondary); }
+.hire-cta { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: center; padding-top: 16px; border-top: 1px solid var(--line); }
+.hire-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.hire-btns a { text-decoration: none; }
+.hire-cta .footnote { grid-column: 1 / -1; }
+@media (max-width: 860px) { .hire { grid-template-columns: 1fr; padding: 20px; } .hire-cta { grid-template-columns: 1fr; } .hire-wrap { padding: 0 16px; } }

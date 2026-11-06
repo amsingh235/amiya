@@ -96,9 +96,8 @@ At 420 cases, multiply by 2.3. That's about two weeks of free quota for everythi
 The harness handles this for you. It **stops cleanly** at the daily cap, **checkpoints** every case,
 and **resumes** next time you run the same command. Your options:
 
-- **Stay free:** run each pipeline a little every day. Fine, because the harness resumes.
-- **Pay about $1:** Groq's paid tier would finish every run in under an hour. ⚠ This incurs cost
-  (CLAUDE.md says free tiers only), so it's your call, not mine.
+- **Stay free (the plan):** run each pipeline a little every day; the harness resumes where it stopped.
+  Tune on the dev split first (`--split dev`): it's 30% of the tokens, so most of your iterations fit in one day.
 
 > Interview line: "The infra layer I built was the most useful part: backoff that honours
 > retry-after, a client-side rate limiter, daily-cap detection, and per-case checkpointing. A crash at
