@@ -1,0 +1,1030 @@
+{
+  "schema": 1,
+  "generated_at": "2026-11-06T11:34:31Z",
+  "generated_by": "harness/run.py",
+  "model": "llama-3.3-70b-versatile",
+  "pricing": {
+    "model": "llama-3.3-70b-versatile",
+    "input_per_m": 0.59,
+    "output_per_m": 0.79,
+    "cached_input_per_m": null,
+    "read_on": "2026-11-06",
+    "source": "Groq on-demand list price ($0.59 in / $0.79 out per 1M tokens), cross-checked on third-party price trackers (May and Aug 2026). Confirm on groq.com/pricing before quoting.",
+    "embedding": {
+      "model": "BAAI/bge-small-en-v1.5",
+      "usd_per_m": 0.0,
+      "basis": "runs locally on CPU via fastembed (ONNX): $0 marginal cost"
+    },
+    "note": "Free tier bills $0; tokens are priced at the paid on-demand rate so the comparison reflects production cost."
+  },
+  "eval_set": {
+    "file": "data/eval.seed.jsonl",
+    "sha": "d65999fe28a8",
+    "status": "seed-draft",
+    "status_note": "SEED: synthetic-but-grounded disputes drafted and labelled by Claude. Not yet blind-relabelled by a human: run tools/label.py.",
+    "n": 180,
+    "categories": 9,
+    "self_agreement": null,
+    "difficulty_mix": {
+      "clear": 72,
+      "paraphrase": 63,
+      "ambiguous": 27,
+      "contradictory": 18
+    },
+    "label_mix": {
+      "unauthorised": 20,
+      "duplicate_processing": 20,
+      "credit_not_processed": 20,
+      "cancelled_recurring": 20,
+      "product_not_received": 20,
+      "product_quality": 20,
+      "service_not_rendered": 20,
+      "incorrect_amount": 20,
+      "processing_error": 20
+    },
+    "splits": {
+      "test": 133,
+      "dev": 47
+    }
+  },
+  "taxonomy": [
+    {
+      "id": "unauthorised",
+      "name": "Unauthorised"
+    },
+    {
+      "id": "duplicate_processing",
+      "name": "Duplicate processing"
+    },
+    {
+      "id": "credit_not_processed",
+      "name": "Credit not processed"
+    },
+    {
+      "id": "cancelled_recurring",
+      "name": "Cancelled recurring"
+    },
+    {
+      "id": "product_not_received",
+      "name": "Product not received"
+    },
+    {
+      "id": "product_quality",
+      "name": "Product quality"
+    },
+    {
+      "id": "service_not_rendered",
+      "name": "Service not rendered"
+    },
+    {
+      "id": "incorrect_amount",
+      "name": "Incorrect amount"
+    },
+    {
+      "id": "processing_error",
+      "name": "Processing error"
+    }
+  ],
+  "pipelines": {
+    "rules": {
+      "id": "rules",
+      "name": "Rules engine",
+      "short": "Rules",
+      "uses_llm": false,
+      "status": "complete",
+      "n_scored": 180,
+      "n_total": 180,
+      "eval_sha": "d65999fe28a8",
+      "fingerprint": "ba1e89c87ae1",
+      "variant": "v0-draft · 40 patterns",
+      "run_at": "2026-11-06T11:34:31Z",
+      "model": null,
+      "headline_split": "test",
+      "metrics": {
+        "all": {
+          "n": 180,
+          "correct": 91,
+          "accuracy": 0.5056,
+          "ci95": [
+            0.4332,
+            0.5777
+          ],
+          "accuracy_by_difficulty": {
+            "clear": {
+              "n": 72,
+              "accuracy": 0.8056,
+              "ci95": [
+                0.6997,
+                0.8805
+              ]
+            },
+            "paraphrase": {
+              "n": 63,
+              "accuracy": 0.2857,
+              "ci95": [
+                0.189,
+                0.407
+              ]
+            },
+            "ambiguous": {
+              "n": 27,
+              "accuracy": 0.4444,
+              "ci95": [
+                0.2759,
+                0.6269
+              ]
+            },
+            "contradictory": {
+              "n": 18,
+              "accuracy": 0.1667,
+              "ci95": [
+                0.0584,
+                0.3922
+              ]
+            }
+          },
+          "automation_rate": 0.65,
+          "auto_accuracy": 0.7778,
+          "human_review_rate": 0.35,
+          "parse_error_rate": 0.0,
+          "outcomes": {
+            "correct": 91,
+            "wrong": 26,
+            "abstained": 63,
+            "abstain_reasons": {
+              "no_rule_matched": 63
+            }
+          },
+          "per_category": {
+            "unauthorised": {
+              "support": 20,
+              "precision": 0.6667,
+              "recall": 0.6,
+              "f1": 0.6316
+            },
+            "duplicate_processing": {
+              "support": 20,
+              "precision": 0.6667,
+              "recall": 0.5,
+              "f1": 0.5714
+            },
+            "credit_not_processed": {
+              "support": 20,
+              "precision": 0.8889,
+              "recall": 0.4,
+              "f1": 0.5517
+            },
+            "cancelled_recurring": {
+              "support": 20,
+              "precision": 1.0,
+              "recall": 0.3,
+              "f1": 0.4615
+            },
+            "product_not_received": {
+              "support": 20,
+              "precision": 0.6471,
+              "recall": 0.55,
+              "f1": 0.5946
+            },
+            "product_quality": {
+              "support": 20,
+              "precision": 0.8235,
+              "recall": 0.7,
+              "f1": 0.7568
+            },
+            "service_not_rendered": {
+              "support": 20,
+              "precision": 0.7778,
+              "recall": 0.35,
+              "f1": 0.4828
+            },
+            "incorrect_amount": {
+              "support": 20,
+              "precision": 0.8462,
+              "recall": 0.55,
+              "f1": 0.6667
+            },
+            "processing_error": {
+              "support": 20,
+              "precision": 0.9231,
+              "recall": 0.6,
+              "f1": 0.7273
+            }
+          },
+          "confusion": {
+            "rows": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error"
+            ],
+            "cols": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error",
+              "abstain"
+            ],
+            "matrix": [
+              [
+                12,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                5
+              ],
+              [
+                1,
+                10,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                8
+              ],
+              [
+                0,
+                0,
+                8,
+                0,
+                2,
+                2,
+                1,
+                0,
+                0,
+                7
+              ],
+              [
+                1,
+                2,
+                0,
+                6,
+                1,
+                0,
+                0,
+                0,
+                0,
+                10
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                11,
+                1,
+                1,
+                0,
+                0,
+                6
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                1,
+                14,
+                0,
+                0,
+                0,
+                4
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                7,
+                1,
+                0,
+                10
+              ],
+              [
+                1,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                11,
+                1,
+                6
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                12,
+                7
+              ]
+            ]
+          },
+          "top_confusions": [
+            {
+              "gold": "cancelled_recurring",
+              "pred": "abstain",
+              "count": 10,
+              "share_of_gold": 0.5
+            },
+            {
+              "gold": "service_not_rendered",
+              "pred": "abstain",
+              "count": 10,
+              "share_of_gold": 0.5
+            },
+            {
+              "gold": "duplicate_processing",
+              "pred": "abstain",
+              "count": 8,
+              "share_of_gold": 0.4
+            },
+            {
+              "gold": "credit_not_processed",
+              "pred": "abstain",
+              "count": 7,
+              "share_of_gold": 0.35
+            },
+            {
+              "gold": "processing_error",
+              "pred": "abstain",
+              "count": 7,
+              "share_of_gold": 0.35
+            },
+            {
+              "gold": "product_not_received",
+              "pred": "abstain",
+              "count": 6,
+              "share_of_gold": 0.3
+            },
+            {
+              "gold": "incorrect_amount",
+              "pred": "abstain",
+              "count": 6,
+              "share_of_gold": 0.3
+            },
+            {
+              "gold": "unauthorised",
+              "pred": "abstain",
+              "count": 5,
+              "share_of_gold": 0.25
+            }
+          ]
+        },
+        "test": {
+          "n": 133,
+          "correct": 66,
+          "accuracy": 0.4962,
+          "ci95": [
+            0.4126,
+            0.5801
+          ],
+          "accuracy_by_difficulty": {
+            "clear": {
+              "n": 52,
+              "accuracy": 0.7885,
+              "ci95": [
+                0.6597,
+                0.8776
+              ]
+            },
+            "paraphrase": {
+              "n": 45,
+              "accuracy": 0.3111,
+              "ci95": [
+                0.1953,
+                0.4567
+              ]
+            },
+            "ambiguous": {
+              "n": 21,
+              "accuracy": 0.381,
+              "ci95": [
+                0.2075,
+                0.5912
+              ]
+            },
+            "contradictory": {
+              "n": 15,
+              "accuracy": 0.2,
+              "ci95": [
+                0.0705,
+                0.4519
+              ]
+            }
+          },
+          "automation_rate": 0.6617,
+          "auto_accuracy": 0.75,
+          "human_review_rate": 0.3383,
+          "parse_error_rate": 0.0,
+          "outcomes": {
+            "correct": 66,
+            "wrong": 22,
+            "abstained": 45,
+            "abstain_reasons": {
+              "no_rule_matched": 45
+            }
+          },
+          "per_category": {
+            "unauthorised": {
+              "support": 15,
+              "precision": 0.6667,
+              "recall": 0.5333,
+              "f1": 0.5926
+            },
+            "duplicate_processing": {
+              "support": 15,
+              "precision": 0.6154,
+              "recall": 0.5333,
+              "f1": 0.5714
+            },
+            "credit_not_processed": {
+              "support": 15,
+              "precision": 0.8571,
+              "recall": 0.4,
+              "f1": 0.5455
+            },
+            "cancelled_recurring": {
+              "support": 12,
+              "precision": 1.0,
+              "recall": 0.1667,
+              "f1": 0.2857
+            },
+            "product_not_received": {
+              "support": 16,
+              "precision": 0.6,
+              "recall": 0.5625,
+              "f1": 0.5806
+            },
+            "product_quality": {
+              "support": 13,
+              "precision": 0.75,
+              "recall": 0.6923,
+              "f1": 0.72
+            },
+            "service_not_rendered": {
+              "support": 16,
+              "precision": 0.8571,
+              "recall": 0.375,
+              "f1": 0.5217
+            },
+            "incorrect_amount": {
+              "support": 16,
+              "precision": 0.9,
+              "recall": 0.5625,
+              "f1": 0.6923
+            },
+            "processing_error": {
+              "support": 15,
+              "precision": 0.9,
+              "recall": 0.6,
+              "f1": 0.72
+            }
+          },
+          "confusion": {
+            "rows": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error"
+            ],
+            "cols": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error",
+              "abstain"
+            ],
+            "matrix": [
+              [
+                8,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                4
+              ],
+              [
+                0,
+                8,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                7
+              ],
+              [
+                0,
+                0,
+                6,
+                0,
+                2,
+                2,
+                1,
+                0,
+                0,
+                4
+              ],
+              [
+                0,
+                2,
+                0,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                7
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                9,
+                1,
+                0,
+                0,
+                0,
+                5
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                1,
+                9,
+                0,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                6,
+                1,
+                0,
+                7
+              ],
+              [
+                1,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                9,
+                1,
+                4
+              ],
+              [
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                9,
+                5
+              ]
+            ]
+          },
+          "top_confusions": [
+            {
+              "gold": "cancelled_recurring",
+              "pred": "abstain",
+              "count": 7,
+              "share_of_gold": 0.5833
+            },
+            {
+              "gold": "duplicate_processing",
+              "pred": "abstain",
+              "count": 7,
+              "share_of_gold": 0.4667
+            },
+            {
+              "gold": "service_not_rendered",
+              "pred": "abstain",
+              "count": 7,
+              "share_of_gold": 0.4375
+            },
+            {
+              "gold": "processing_error",
+              "pred": "abstain",
+              "count": 5,
+              "share_of_gold": 0.3333
+            },
+            {
+              "gold": "product_not_received",
+              "pred": "abstain",
+              "count": 5,
+              "share_of_gold": 0.3125
+            },
+            {
+              "gold": "unauthorised",
+              "pred": "abstain",
+              "count": 4,
+              "share_of_gold": 0.2667
+            },
+            {
+              "gold": "credit_not_processed",
+              "pred": "abstain",
+              "count": 4,
+              "share_of_gold": 0.2667
+            },
+            {
+              "gold": "incorrect_amount",
+              "pred": "abstain",
+              "count": 4,
+              "share_of_gold": 0.25
+            }
+          ]
+        },
+        "dev": {
+          "n": 47,
+          "correct": 25,
+          "accuracy": 0.5319,
+          "ci95": [
+            0.3923,
+            0.6667
+          ],
+          "accuracy_by_difficulty": {
+            "clear": {
+              "n": 20,
+              "accuracy": 0.85,
+              "ci95": [
+                0.6396,
+                0.9476
+              ]
+            },
+            "paraphrase": {
+              "n": 18,
+              "accuracy": 0.2222,
+              "ci95": [
+                0.09,
+                0.4522
+              ]
+            },
+            "ambiguous": {
+              "n": 6,
+              "accuracy": 0.6667,
+              "ci95": [
+                0.3,
+                0.9032
+              ]
+            },
+            "contradictory": {
+              "n": 3,
+              "accuracy": 0.0,
+              "ci95": [
+                0.0,
+                0.5615
+              ]
+            }
+          },
+          "automation_rate": 0.617,
+          "auto_accuracy": 0.8621,
+          "human_review_rate": 0.383,
+          "parse_error_rate": 0.0,
+          "outcomes": {
+            "correct": 25,
+            "wrong": 4,
+            "abstained": 18,
+            "abstain_reasons": {
+              "no_rule_matched": 18
+            }
+          },
+          "per_category": {
+            "unauthorised": {
+              "support": 5,
+              "precision": 0.6667,
+              "recall": 0.8,
+              "f1": 0.7273
+            },
+            "duplicate_processing": {
+              "support": 5,
+              "precision": 1.0,
+              "recall": 0.4,
+              "f1": 0.5714
+            },
+            "credit_not_processed": {
+              "support": 5,
+              "precision": 1.0,
+              "recall": 0.4,
+              "f1": 0.5714
+            },
+            "cancelled_recurring": {
+              "support": 8,
+              "precision": 1.0,
+              "recall": 0.5,
+              "f1": 0.6667
+            },
+            "product_not_received": {
+              "support": 4,
+              "precision": 1.0,
+              "recall": 0.5,
+              "f1": 0.6667
+            },
+            "product_quality": {
+              "support": 7,
+              "precision": 1.0,
+              "recall": 0.7143,
+              "f1": 0.8333
+            },
+            "service_not_rendered": {
+              "support": 4,
+              "precision": 0.5,
+              "recall": 0.25,
+              "f1": 0.3333
+            },
+            "incorrect_amount": {
+              "support": 4,
+              "precision": 0.6667,
+              "recall": 0.5,
+              "f1": 0.5714
+            },
+            "processing_error": {
+              "support": 5,
+              "precision": 1.0,
+              "recall": 0.6,
+              "f1": 0.75
+            }
+          },
+          "confusion": {
+            "rows": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error"
+            ],
+            "cols": [
+              "unauthorised",
+              "duplicate_processing",
+              "credit_not_processed",
+              "cancelled_recurring",
+              "product_not_received",
+              "product_quality",
+              "service_not_rendered",
+              "incorrect_amount",
+              "processing_error",
+              "abstain"
+            ],
+            "matrix": [
+              [
+                4,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1
+              ],
+              [
+                1,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                1
+              ],
+              [
+                0,
+                0,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3
+              ],
+              [
+                1,
+                0,
+                0,
+                4,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                1,
+                0,
+                0,
+                1
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                5,
+                0,
+                0,
+                0,
+                2
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                3
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                2
+              ],
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+                2
+              ]
+            ]
+          },
+          "top_confusions": [
+            {
+              "gold": "service_not_rendered",
+              "pred": "abstain",
+              "count": 3,
+              "share_of_gold": 0.75
+            },
+            {
+              "gold": "credit_not_processed",
+              "pred": "abstain",
+              "count": 3,
+              "share_of_gold": 0.6
+            },
+            {
+              "gold": "cancelled_recurring",
+              "pred": "abstain",
+              "count": 3,
+              "share_of_gold": 0.375
+            },
+            {
+              "gold": "incorrect_amount",
+              "pred": "abstain",
+              "count": 2,
+              "share_of_gold": 0.5
+            },
+            {
+              "gold": "processing_error",
+              "pred": "abstain",
+              "count": 2,
+              "share_of_gold": 0.4
+            },
+            {
+              "gold": "product_quality",
+              "pred": "abstain",
+              "count": 2,
+              "share_of_gold": 0.2857
+            },
+            {
+              "gold": "product_not_received",
+              "pred": "service_not_rendered",
+              "count": 1,
+              "share_of_gold": 0.25
+            },
+            {
+              "gold": "product_not_received",
+              "pred": "abstain",
+              "count": 1,
+              "share_of_gold": 0.25
+            }
+          ]
+        }
+      },
+      "latency": {
+        "n": 175,
+        "p50_ms": 0.0597,
+        "p95_ms": 0.1074,
+        "mean_ms": 0.0594,
+        "max_ms": 0.187,
+        "warmup_discarded": 5
+      },
+      "cost": {
+        "cost_per_case_usd": 0.0,
+        "cost_per_1k_usd": 0.0,
+        "total_usd": 0.0,
+        "tokens_in_per_case": 0.0,
+        "tokens_out_per_case": 0.0,
+        "calls_per_case": 0.0,
+        "cached_tokens_total": 0,
+        "caching_used": false
+      },
+      "fixed_monthly_usd": 400.0,
+      "fixed_monthly_basis": "ASSUMPTION: ~4 h/month of pattern maintenance at $100/h. Someone edits rules.toml forever as wording drifts.",
+      "config": {
+        "patterns": 40
+      },
+      "history": [
+        {
+          "fingerprint": "ba1e89c87ae1",
+          "variant": "v0-draft · 40 patterns",
+          "first_run": "2026-11-06T11:16:13Z",
+          "n": 180,
+          "dev_accuracy": 0.5319,
+          "test_accuracy": 0.4962,
+          "cost_per_1k_usd": 0.0
+        }
+      ],
+      "langfuse_trace": null
+    }
+  }
+}

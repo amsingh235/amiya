@@ -1,0 +1,6 @@
+# Core harness + rules pipeline + BM25 retrieval + MCP server + dashboard server: standard library only (Python 3.11+).
+# Every line below is justified in DECISIONS.md.
+
+pytest>=8            # tests
+fastembed>=0.4       # optional: local ONNX embeddings for dense retrieval (no torch, no API cost)
+psycopg[binary]>=3.1 # optional: pgvector access (vectors are passed as text, so no pgvector package needed)

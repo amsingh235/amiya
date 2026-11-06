@@ -1,0 +1,33 @@
+{
+  "version": "draft-1",
+  "status": "DRAFT written by Claude from public card-network reason-code documentation (Visa dispute conditions, Mastercard chargeback reason codes). Rewrite every definition in your own words before you label, then lock it: changing the taxonomy halfway invalidates earlier labels.",
+  "categories": [
+    {"id": "unauthorised", "name": "Unauthorised", "signal": "Cardholder does not recognise the merchant",
+     "definition": "The cardholder did not make, permit, or take part in the transaction and does not recognise the merchant or purchase (lost/stolen card, card-not-present fraud, account takeover). Not this category if they recognise the merchant and engaged with them.",
+     "network_refs": "Visa 10.4, Mastercard 4837"},
+    {"id": "duplicate_processing", "name": "Duplicate processing", "signal": "Two charges, same amount, close timestamps",
+     "definition": "One purchase was charged more than once, or the cardholder paid by another method (cash, bank transfer, another card) and the card was charged as well.",
+     "network_refs": "Visa 12.6.1, 12.6.2, Mastercard 4834"},
+    {"id": "credit_not_processed", "name": "Credit not processed", "signal": "Refund promised, never credited",
+     "definition": "The merchant acknowledged money is owed back (agreed a refund, accepted a return, cancelled with a refund promise, issued a refund confirmation) and the credit never arrived or arrived short.",
+     "network_refs": "Visa 13.6, Mastercard 4853"},
+    {"id": "cancelled_recurring", "name": "Cancelled recurring", "signal": "Subscription billed after cancellation",
+     "definition": "A recurring charge (subscription, membership, auto-renewal) was billed after the cardholder cancelled or withdrew permission for future charges.",
+     "network_refs": "Visa 13.2, Mastercard 4841"},
+    {"id": "product_not_received", "name": "Product not received", "signal": "Paid, nothing delivered",
+     "definition": "Goods (physical or digital: downloads, licence keys, gift cards) were paid for but never arrived, arrived only in part, or did not arrive by the agreed date, and no refund was agreed.",
+     "network_refs": "Visa 13.1, Mastercard 4855"},
+    {"id": "product_quality", "name": "Product quality", "signal": "Delivered, damaged or not as described",
+     "definition": "Goods arrived but were damaged, defective, counterfeit, the wrong item, or materially different from the description, and no refund was agreed.",
+     "network_refs": "Visa 13.3, 13.4, Mastercard 4853"},
+    {"id": "service_not_rendered", "name": "Service not rendered", "signal": "Booking or service did not happen",
+     "definition": "A service, booking, event, class, course, repair, or travel was paid for but not provided, and no refund was agreed.",
+     "network_refs": "Visa 13.1 (services), Mastercard 4855"},
+    {"id": "incorrect_amount", "name": "Incorrect amount", "signal": "Charged more than agreed",
+     "definition": "The cardholder agreed to the purchase but was charged more than the agreed price: overcharge, undisclosed fee, altered tip, wrong quantity, quote exceeded.",
+     "network_refs": "Visa 12.5, Mastercard 4831"},
+    {"id": "processing_error", "name": "Processing error", "signal": "Wrong currency, wrong account, technical fault",
+     "definition": "The price was right but the processing was wrong: wrong or unrequested currency, posted to the wrong card or account, charged after a decline, posted very late, refund processed as a charge.",
+     "network_refs": "Visa 12.1-12.4, 12.7, Mastercard 4834"}
+  ]
+}

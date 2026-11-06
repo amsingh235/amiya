@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overkill · dispute triage benchmark</title>
+  <meta name="description" content="Rules, one LLM call, RAG and a multi-agent graph classify the same payment disputes. Accuracy, p95 latency and real token cost, measured by one harness." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231c5cab'/%3E%3Cpath d='M8 22l5-6 4 4 7-10' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="topbar" id="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 22l5-6 4 4 8-11" /></svg></span>
+      <span class="wordmark">Overkill</span>
+      <span class="chips" id="chips"></span>
+    </div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#ladder">Results</a><a href="#tco">Cost model</a><a href="#errors">Failure modes</a><a href="#ops">Console</a><a href="#method">Method</a>
+    </nav>
+    <div class="actions">
+      <button class="icon-btn" id="searchBtn" title="Search policy and cases (/)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><kbd>/</kbd></button>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button class="autopilot-toggle" id="autoBtn" role="switch" aria-checked="false" title="Autopilot: the agent takes the mouse and operates this console">
+        <span class="ap-dot"></span><span class="ap-label">Autopilot</span><span class="ap-sub">computer-use</span><span class="ap-switch"><span></span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="hero">
+      <p class="eyebrow">Payment dispute triage · 9 categories · one model held constant</p>
+      <h1>Four ways to triage a dispute. <span class="soft">Measured, not guessed.</span></h1>
+      <p class="lede">A rules engine, one LLM call, retrieval over written policy, and a three-agent graph classify the same hand-written disputes. One harness times every call and prices every token. The question is never “can AI do it” but <em>where the next step of sophistication pays for itself</em>.</p>
+      <div class="finding" id="finding" aria-live="polite"></div>
+      <div class="banner" id="seedBanner" hidden></div>
+    </section>
+
+    <section class="block" id="ladder" aria-labelledby="ladderTitle">
+      <div class="block-head">
+        <h2 id="ladderTitle">The escalation ladder</h2>
+        <p>Held-out test split. Each step up should earn its cost. <span class="muted">Tuning happens on the dev split only.</span></p>
+      </div>
+      <div class="ladder" id="ladderCards"></div>
+    </section>
+
+    <section class="block grid-2" id="tradeoff">
+      <figure class="card chart-card">
+        <figcaption><h3>Accuracy vs cost</h3><p>Test accuracy with 95% interval. Cost per 1,000 disputes at list price, log scale.</p></figcaption>
+        <div class="chart" id="scatter" role="img" aria-label="Accuracy versus cost per thousand disputes"></div>
+        <div class="legend" id="scatterLegend"></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Latency, p50 → p95</h3><p>Mean latency hides the tail, and the tail is what breaks an SLA. First 5 calls of each run discarded as warm-up.</p></figcaption>
+        <div class="chart" id="latency" role="img" aria-label="Latency p50 and p95 per pipeline"></div>
+      </figure>
+    </section>
+
+    <section class="block" id="tiers">
+      <figure class="card chart-card wide">
+        <figcaption><h3>Where each approach breaks</h3><p>Accuracy by difficulty tier, all cases. The tiers are designed so each step up the ladder has a place to earn its keep: rules die on paraphrase, retrieval should win on policy conflicts, a verifier should win when the stated reason contradicts the facts.</p></figcaption>
+        <div class="chart tall" id="tierChart" role="img" aria-label="Accuracy by difficulty tier per pipeline"></div>
+        <div class="legend" id="tierLegend"></div>
+      </figure>
+    </section>
+
+    <section class="block" id="tco" aria-labelledby="tcoTitle">
+      <div class="block-head">
+        <h2 id="tcoTitle">What it costs to be right</h2>
+        <p>Total monthly cost = fixed infra + tokens + <em>your</em> cost of a wrong automatic decision + the cost of a human review. Move the sliders to a client's numbers.</p>
+      </div>
+      <div class="card tco">
+        <div class="tco-controls">
+          <label class="ctl"><span>Monthly volume</span><input type="range" id="volume" min="2" max="6" step="0.01" value="4.3" /><output id="volumeOut"></output></label>
+          <label class="ctl"><span>Cost of a wrong auto-decision</span><input type="range" id="errCost" min="0" max="100" step="1" value="15" /><output id="errCostOut"></output></label>
+          <label class="ctl"><span>Cost of a human review</span><input type="range" id="reviewCost" min="0" max="20" step="0.5" value="3" /><output id="reviewCostOut"></output></label>
+          <label class="ctl ctl-small"><span>Currency</span><select id="currency"><option value="USD">USD $</option><option value="INR">INR ₹</option></select><input id="fx" type="number" min="1" step="0.5" value="88" title="₹ per $ (assumption)" aria-label="Rupees per dollar" /></label>
+        </div>
+        <div class="tco-body">
+          <div class="chart tall" id="tcoChart" role="img" aria-label="Total monthly cost by volume per pipeline"></div>
+          <div class="tco-verdict" id="tcoVerdict"></div>
+        </div>
+        <p class="footnote" id="tcoNote"></p>
+      </div>
+    </section>
+
+    <section class="block" id="errors" aria-labelledby="errTitle">
+      <div class="block-head">
+        <h2 id="errTitle">Failure modes</h2>
+        <p>Approaches don't just fail less, they fail <em>differently</em>. Rows are the true category; columns are what the pipeline said.</p>
+      </div>
+      <div class="tabs" id="cmTabs" role="tablist"></div>
+      <div class="grid-cm">
+        <div class="card"><div class="chart" id="confusion" role="img" aria-label="Confusion matrix"></div></div>
+        <div class="card side" id="cmSide"></div>
+      </div>
+    </section>
+
+    <section class="block" id="ops" aria-labelledby="opsTitle">
+      <div class="block-head">
+        <h2 id="opsTitle">Operations console</h2>
+        <p>Pick a dispute or write your own. Rules and policy search run in your browser; LLM pipelines replay their recorded runs, or call Groq live when served by <code>python serve.py</code>. Switch on <b>Autopilot</b> and the agent takes the mouse.</p>
+      </div>
+      <div class="console">
+        <div class="pane inbox" id="inbox">
+          <div class="pane-head"><h3>Inbox</h3><label class="blind"><input type="checkbox" id="blind" /> blind (hide labels)</label></div>
+          <div class="filters" id="filters"></div>
+          <input class="input" id="inboxSearch" placeholder="Filter disputes…" aria-label="Filter disputes" />
+          <ul class="case-list" id="caseList"></ul>
+        </div>
+        <div class="pane bench" id="bench">
+          <div class="pane-head"><h3>Workbench</h3><span class="src" id="liveTag"></span></div>
+          <textarea id="disputeText" class="input text" rows="4" placeholder="Paste a cardholder's message, e.g. “I paid the plumber by bank transfer and he also charged my card on file.”"></textarea>
+          <div class="bench-actions">
+            <button class="btn" id="searchPolicyBtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>Search policy</button>
+            <button class="btn primary" id="runBtn"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>Run all four</button>
+            <span class="gold" id="goldTag"></span>
+          </div>
+          <div class="lanes" id="lanes"></div>
+          <div class="hits" id="hits"></div>
+        </div>
+        <div class="pane outbox" id="outbox">
+          <div class="pane-head"><h3>Outbox</h3><span class="muted" id="outCount">0</span></div>
+          <div class="stacks" id="stacks"></div>
+          <div class="out-actions"><button class="btn small" id="exportCsv">Export CSV</button><button class="btn small" id="exportJson">JSON</button><button class="btn small ghost" id="clearOut">Clear</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="method" aria-labelledby="methodTitle">
+      <div class="block-head"><h2 id="methodTitle">How these numbers were made</h2><p>Every number on this page is read from <code>results.json</code>, written by the harness. None are typed by hand.</p></div>
+      <div class="method-grid" id="methodGrid"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Overkill · built by Amiya Manas Singh</span>
+    <span id="footGen"></span>
+  </footer>
+
+  <!-- Autopilot: the virtual cursor and the operator log -->
+  <div class="ap-frame" id="apFrame" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.2L16 21l-3 1.4-3.6-7.6L4 19z"/></svg><span class="cursor-tag">Autopilot</span></div>
+  <aside class="aplog" id="apLog" aria-live="polite" hidden>
+    <div class="aplog-head">
+      <span class="ap-dot live"></span><b>Autopilot</b><span class="muted">operating the console</span>
+      <button class="icon-btn small" id="apClose" title="Take back control (Esc)" aria-label="Stop autopilot"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="aplog-ctl">
+      <select id="mission" aria-label="Mission"><option value="triage">Mission: triage the inbox</option><option value="hunt">Mission: hunt failure modes</option></select>
+      <select id="speed" aria-label="Speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+    </div>
+    <div class="tally" id="tally"></div>
+    <ol class="log" id="logList"></ol>
+  </aside>
+
+  <div class="tip" id="tip" role="tooltip"></div>
+
+  <dialog class="search" id="searchDlg" aria-label="Search">
+    <input class="input" id="searchInput" placeholder="Search policy rules and disputes… (try “paid in cash”)" autocomplete="off" />
+    <ul class="results" id="searchResults"></ul>
+    <p class="muted small">BM25 over 46 policy documents and every dispute, in your browser. ↑↓ to move, Enter to open, Esc to close.</p>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
