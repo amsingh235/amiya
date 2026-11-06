@@ -188,7 +188,7 @@ async function boot() {
 }
 
 function renderAll() {
-  renderChips(); renderHero(); renderLadder(); renderCharts(); renderTabs(); renderConfusion();
+  renderChips(); renderHero(); renderLadder(); renderBeyond(); renderCritic(); renderCharts(); renderTabs(); renderConfusion();
   renderFilters(); renderInbox(); renderLanes(); renderOutbox(); renderMethod();
   $("#footGen").textContent = state.results ? `results.json generated ${state.results.generated_at} by ${state.results.generated_by}` : "results.json not generated yet";
 }
@@ -804,6 +804,14 @@ async function processCase(c, mission) {
     apLog(`failure mode: ${esc(NAME[item.by])} said ${r.pred ? esc(cat(r.pred)) : "human"}, label is ${esc(cat(c.label))}${r.meta?.pattern ? `; pattern <code>${esc(r.meta.match)}</code> fired first` : ""}`, "found");
   }
   apLog(`decision by ${LETTER[item.by]} ${esc(NAME[item.by])}: <b>${item.decision ? esc(cat(item.decision)) : "route to human"}</b>`, "decide");
+  if (c.difficulty === "paraphrase" && !AP.redteamed) {
+    AP.redteamed = true;
+    await apClick($("#redteamBtn"));
+    const rt = await redTeam();
+    guard();
+    apLog(`red team: rules held ${rt.held}/${rt.counted} rewrites of ${c.id}`, "attack");
+    await apWait(900);
+  }
   await flyCard(outcome, `${c.id} → ${item.decision ? cat(item.decision) : "human review"}`);
   fileToOutbox(item);
   const t = AP.tally;
@@ -818,6 +826,7 @@ async function startAutopilot() {
   AP.on = true;
   AP.speed = +$("#speed").value;
   AP.tally = { processed: 0, resolved: 0, human: 0, mismatch: 0, spend: 0 };
+  AP.redteamed = false;
   document.body.classList.add("autopilot");
   $("#autoBtn").setAttribute("aria-checked", "true");
   $("#apLog").hidden = false;
@@ -847,19 +856,179 @@ function stopAutopilot(keepLog = false) {
   if (!keepLog) $("#apLog").hidden = true;
 }
 
-/* ------------------------------------------------------------------ theme + wiring */
-function initTheme() {
-  const t = load("theme", null);
-  if (t) document.documentElement.dataset.theme = t;
+/* ------------------------------------------------------------------ beyond the ladder: cascade (E) */
+function renderBeyond() {
+  const e = P("cascade"), rag = P("rag");
+  const flow = `<div class="flow"><span class="fnode">8B · zero-shot</span><span class="fedge">confident ≥ τ →</span><span class="fnode done">answer</span><span class="fedge">· unsure →</span><span class="fnode big">70B + RAG</span></div>`;
+  let body;
+  if (e) {
+    const m = head(e);
+    body = `<div class="beyond-stats"><div><b>${pct(m.accuracy)}</b><span>test accuracy</span></div><div><b>${pct(e.escalation_rate, 0)}</b><span>escalated to 70B</span></div>
+      <div><b>${usd(e.cost.cost_per_1k_usd)}</b><span>per 1k${rag ? ` (RAG: ${usd(rag.cost.cost_per_1k_usd)})` : ""}</span></div><div><b>${ms(e.latency.p95_ms)}</b><span>p95</span></div></div>`;
+  } else {
+    body = `<div class="cmd"><span>python run_eval.py --pipeline cascade --split dev</span><button data-copy="python run_eval.py --pipeline cascade --split dev" title="Copy">copy</button></div>
+      <p class="muted small" style="margin:6px 0 0">Tune the escalation threshold on dev first (<code>CASCADE_THRESHOLD=0.85</code>): an 8B model's self-reported confidence is poorly calibrated.</p>`;
+  }
+  $("#beyond").innerHTML = `<article class="card beyond-card"><div class="rung-head"><span class="badge e">E</span><h3>Beyond the ladder: a model cascade</h3><span class="status">${e ? e.status : "not run"} · model-mix experiment</span></div>
+    <p class="muted small" style="margin:0">The cheapest agentic pattern: a small model answers first and the big model only sees the hard tail. It mixes models, so it is <b>not</b> part of the four-way comparison (CLAUDE.md). The question it answers: what share escalates, and does accuracy survive?</p>${flow}${body}</article>`;
 }
-function toggleTheme() {
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.dataset.theme = dark ? "light" : "dark";
-  store("theme", document.documentElement.dataset.theme);
-  renderCharts();
+
+/* ------------------------------------------------------------------ the skeptical reviewer (critic analytics) */
+const ciHalf = (n) => (n ? Math.round(196 * Math.sqrt(0.25 / n)) : 100);
+function critique() {
+  const r = state.results, m = state.meta, out = [], av = available();
+  const add = (sev, title, evidence, fix = "") => out.push({ sev, title, evidence, fix });
+  if (m.status !== "frozen-human") add("fail", "The labels aren't yours yet", `${m.n} disputes were labelled by Claude as a seed. Any number measured against them measures agreement with Claude.`, "python tools/label.py pass1 → (a day later) pass2 → agree → freeze");
+  else add("pass", "Labels: human, blind, double-pass", `${m.file} is frozen.`);
+  if (m.self_agreement == null) add("warn", "No ceiling measured", "Without your self-agreement rate nobody can say what 'good' looks like on this set.", "python tools/label.py agree");
+  else add("pass", "Ceiling measured", `Self-agreement ${pct(m.self_agreement)}: no pipeline can meaningfully beat it.`);
+  if (m.n < 200) add("warn", `Eval set is small (n=${m.n})`, `Test split n=${m.splits.test}: 95% intervals are about ±${ciHalf(m.splits.test)} points. Below 200 cases, differences stop meaning much.`, "Extend toward 420 cases, written from public sources.");
+  else if (m.n < 420) add("info", `Eval set n=${m.n}`, `Test intervals ≈ ±${ciHalf(m.splits.test)} points.`, "420 is the target.");
+  else add("pass", `Eval set n=${m.n}`, `Test intervals ≈ ±${ciHalf(m.splits.test)} points.`);
+  const tiny = TIERS.filter((t) => (m.difficulty_mix[t] || 0) < 40);
+  if (tiny.length) add("warn", "Tier claims rest on tiny samples", tiny.map((t) => `${TIER_LABEL[t]}: n=${m.difficulty_mix[t]} (±${ciHalf(m.difficulty_mix[t])} pts)`).join(" · "), "Say “directionally” for these tiers, or add cases to them.");
+  if (av.length < 4) add("warn", `Comparison incomplete: ${av.length} of 4 rungs measured`, `Missing: ${PIDS.filter((p) => !P(p)).map((p) => NAME[p]).join(", ")}.`, `python run_eval.py -p ${PIDS.find((p) => !P(p))} --estimate`);
+  else add("pass", "All four rungs measured", "");
+  for (let i = 1; i < av.length; i++) {
+    const a = head(P(av[i - 1])), b = head(P(av[i]));
+    const overlap = b.ci95[0] <= a.ci95[1] && a.ci95[0] <= b.ci95[1];
+    if (overlap) add("warn", `${NAME[av[i]]} vs ${NAME[av[i - 1]]}: inside the noise`, `${pct(b.accuracy)} [${pct(b.ci95[0], 0)}–${pct(b.ci95[1], 0)}] vs ${pct(a.accuracy)} [${pct(a.ci95[0], 0)}–${pct(a.ci95[1], 0)}]: the intervals overlap.`, "Don't call a winner. Add cases or use a paired test (McNemar) on the same items.");
+    else add("pass", `${NAME[av[i]]} beats ${NAME[av[i - 1]]} beyond the interval`, `${pct(b.accuracy)} vs ${pct(a.accuracy)}, non-overlapping 95% intervals.`);
+  }
+  if (P("rules") && P("single")) {
+    const gap = (head(P("single")).accuracy - head(P("rules")).accuracy) * 100;
+    if (gap < 10) add("fail", `Rules → LLM gap is only ${gap.toFixed(1)} points`, "Per the runbook, that means the eval set is too easy.", "Add harder paraphrase cases before building further.");
+  }
+  av.forEach((p) => {
+    const e = P(p), gap = (e.metrics.dev.accuracy - e.metrics.test.accuracy) * 100;
+    if (gap > 8) add("warn", `${NAME[p]}: dev ≫ test (${gap.toFixed(1)} pts)`, `Dev ${pct(e.metrics.dev.accuracy)} vs test ${pct(e.metrics.test.accuracy)}: a sign of tuning to the dev split.`, "Freeze the config and report test only.");
+    const a = e.metrics.all;
+    if (a.automation_rate < 0.85) add("info", `${NAME[p]} hands ${pct(1 - a.automation_rate, 0)} to a human`, `Accuracy when it decides: ${pct(a.auto_accuracy)}; strict accuracy: ${pct(a.accuracy)}.`, "Quote both: strict alone undersells it, automated-only oversells it.");
+    if (a.parse_error_rate > 0.02) add("warn", `${NAME[p]}: ${pct(a.parse_error_rate)} parse errors`, "Output failed the enum/tool schema.", "Inspect those rows; fix the schema or prompt, not the scorer.");
+    if (e.status === "partial") add("warn", `${NAME[p]} is partial (${e.n_scored}/${e.n_total})`, "A partial run can be a biased sample (e.g. dev only).", "Finish the run before comparing.");
+    if (e.eval_sha !== m.sha) add("fail", `${NAME[p]} is stale`, "It was scored against an older eval set.", `python run_eval.py -p ${p}`);
+  });
+  if (r?.pricing) {
+    const days = (Date.now() - Date.parse(r.pricing.read_on)) / 864e5;
+    add(days > 60 ? "warn" : "pass", days > 60 ? "Prices may be stale" : "Prices read recently", `List prices read on ${r.pricing.read_on}.`, days > 60 ? "Re-check groq.com/pricing and update harness/cost.py." : "");
+  }
+  if (av.length) add("info", "Fixed monthly costs are assumptions", av.map((p) => `${LETTER[p]} $${P(p).fixed_monthly_usd}`).join(" · "), "Replace with the client's real infra quote before advising anyone.");
+  if (P("rules") && av.some((p) => P(p).uses_llm)) add("info", "Latency isn't like-for-like", "Rules run in-process; LLM calls cross the network.", "Say so whenever you compare p95.");
+  add("pass", "No eval text leaks into the policy corpus", "A test fails if any dispute shares a 7-word run with a policy document.");
+  return out;
+}
+function renderCritic() {
+  const list = critique();
+  const w = { pass: 1, info: 0.5, warn: 0, fail: 0 };
+  const score = Math.round((100 * list.reduce((a, c) => a + w[c.sev], 0)) / list.length);
+  const label = { pass: "Pass", info: "Note", warn: "Warn", fail: "Fail" };
+  const icon = { pass: ICON.good, info: ICON.human.replace(/<circle cx="12" cy="8"[^>]*>/, '<circle cx="12" cy="12" r="9"/>'), warn: ICON.warn, fail: ICON.bad };
+  const counts = Object.fromEntries(["fail", "warn", "info", "pass"].map((k) => [k, list.filter((c) => c.sev === k).length]));
+  const order = { fail: 0, warn: 1, info: 2, pass: 3 };
+  $("#criticBox").innerHTML = `<div class="card critic-score"><div class="ring-score" style="--v:${score}"><b>${score}</b><span>/100</span></div>
+      <div><h3>Interview-readiness</h3><p class="muted small">${counts.fail} fail · ${counts.warn} warn · ${counts.info} notes · ${counts.pass} pass. Each red is a question you would lose today.</p></div></div>
+    <div class="critic-list">${list.sort((a, b) => order[a.sev] - order[b.sev]).map((c) => `<div class="crit ${c.sev}"><span class="sev">${icon[c.sev]}${label[c.sev]}</span>
+      <div><b>${esc(c.title)}</b>${c.evidence ? `<p>${esc(c.evidence)}</p>` : ""}${c.fix ? `<p class="fix">→ ${esc(c.fix)}</p>` : ""}</div></div>`).join("")}</div>`;
+}
+
+/* ------------------------------------------------------------------ RED TEAM: attack a dispute, watch what breaks */
+const HINGLISH = [[/\bcharged\b/gi, "paise kaat liye"], [/\btwice\b/gi, "do baar"], [/\bnever\b/gi, "kabhi nahi"], [/\bmoney\b/gi, "paise"],
+  [/\breceived\b/gi, "mila"], [/\bcancell?ed\b/gi, "cancel kar diya"], [/\bstill\b/gi, "phir bhi"], [/\brefund\b/gi, "refund (paisa wapas)"], [/\barrived\b/gi, "aaya"], [/\bbut\b/gi, "lekin"]];
+const SYNONYMS = [[/\bcharged\b/gi, "billed"], [/\btwice\b/gi, "on two separate lines"], [/\brefund(ed)?\b/gi, "money back"], [/\bcancell?(ed|ation)?\b/gi, "ended"],
+  [/\bnever arrived\b/gi, "is still not here"], [/\bdelivered\b/gi, "turned up"], [/\bduplicate\b/gi, "repeated"], [/\bdamaged\b/gi, "in bad shape"],
+  [/\bfraud\w*/gi, "dodgy"], [/\bunauthori[sz]ed\b/gi, "not okayed by me"], [/\bdefective\b/gi, "dud"], [/\boverchar\w*/gi, "took extra"]];
+const SMS = [[/\byou\b/gi, "u"], [/\bplease\b/gi, "pls"], [/\bthe\b/gi, ""], [/\band\b/gi, "&"], [/\bbecause\b/gi, "coz"], [/\breceived\b/gi, "recvd"], [/\bfor\b/gi, "4"], [/\bto\b/gi, "2"]];
+const applyAll = (rules, t) => rules.reduce((acc, [re, to]) => acc.replace(re, to), t).replace(/\s{2,}/g, " ").trim();
+function typoStorm(t) {
+  let i = 0;
+  return t.replace(/[A-Za-z]{5,}/g, (w) => (++i % 3 ? w : w.slice(0, 1) + w[2] + w[1] + w.slice(3)));
+}
+const MUTATIONS = [
+  { id: "typo", name: "Typo storm", fn: typoStorm },
+  { id: "hinglish", name: "Hinglish code-mix", fn: (t) => applyAll(HINGLISH, t) },
+  { id: "synonyms", name: "Keyword-free rewording", fn: (t) => applyAll(SYNONYMS, t) },
+  { id: "sms", name: "SMS-speak", fn: (t) => applyAll(SMS, t) },
+  { id: "caps", name: "ALL-CAPS rage", fn: (t) => `${t.toUpperCase().replace(/\.(\s|$)/g, "!!! ")} FIX THIS NOW 😡` },
+  { id: "buried", name: "Buried in small talk", fn: (t) => `Hi team, hope you're well. I've been a loyal customer for six years and I never complain, but ${t.charAt(0).toLowerCase()}${t.slice(1)} Anyway, thanks and have a lovely weekend.` },
+  { id: "reason", name: "Wrong stated reason", fn: (t) => `Reason for dispute: FRAUD. ${t}` },
+  { id: "terse", name: "Ten words, no context", fn: (t) => t.split(/\s+/).slice(0, 10).join(" "), fragile: true },
+];
+let lastAttack = [];
+async function redTeam() {
+  const text = $("#disputeText").value.trim();
+  const board = $("#redteam");
+  if (!text) return;
+  const gold = currentGold();
+  const ref = gold ? gold.label : rulesClassify(text).label;
+  const liveLLM = !!state.live?.llm;
+  const orig = rulesClassify(text).label;
+  board.hidden = false;
+  board.innerHTML = `<div class="rt-head"><b>⚡ Red team</b><span class="muted small">reference: ${ref ? esc(cat(ref)) : "human review"} ${gold ? "(gold label)" : "(rules on the original)"}${liveLLM ? " · rules + live single call" : " · rules in-browser"}</span><span class="muted small">· rules on the original: ${orig ? esc(cat(orig)) : "→ human"} ${orig === ref ? "✓" : "✗ (already wrong before any attack)"}</span><span class="rt-score" id="rtScore">attacking…</span></div><div class="rt-scan"></div><div class="rt-grid" id="rtGrid"></div>`;
+  board.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  lastAttack = [];
+  let held = 0, counted = 0;
+  for (const mu of MUTATIONS) {
+    const mt = mu.fn(text);
+    const same = mt === text;
+    const rules = rulesClassify(mt).label;
+    let llm;
+    if (liveLLM) { try { llm = (await classify("single", mt)).pred; } catch { llm = undefined; } }
+    const ok = rules === ref;
+    if (!mu.fragile && !same) { counted++; if (ok) held++; }
+    lastAttack.push({ mutation: mu.id, text: mt, rules, single: llm, reference: ref });
+    const card = h("div", { class: `rt-card ${ok ? "held" : "broke"}` }, `<div class="rt-name">${esc(mu.name)}${mu.fragile ? ' <span class="muted small">(may drop the fact)</span>' : same ? ' <span class="muted small">(no change for this text; not counted)</span>' : ""}</div>
+      <p>${esc(mt.length > 150 ? `${mt.slice(0, 150)}…` : mt)}</p>
+      <div class="rt-out"><span class="badge rules">A</span>${rules ? esc(cat(rules)) : "→ human"} <span class="verdict ${ok ? "v-good" : "v-bad"}">${ok ? ICON.good : ICON.bad}</span>
+      ${llm !== undefined ? `<span class="badge single">B</span>${llm ? esc(cat(llm)) : "→ human"} <span class="verdict ${llm === ref ? "v-good" : "v-bad"}">${llm === ref ? ICON.good : ICON.bad}</span>` : ""}</div>`);
+    $("#rtGrid").appendChild(card);
+    await new Promise((r) => setTimeout(r, AP.on ? 120 : 230));
+  }
+  $("#rtScore").innerHTML = `rules held <b>${held}/${counted}</b> <button class="btn small" id="rtExport" title="Download the rewrites as unlabelled eval-set drafts">Export as eval drafts</button>`;
+  return { held, counted };
+}
+function exportAttack() {
+  const src = state.current || "custom";
+  const lines = lastAttack.map((a, i) => JSON.stringify({ id: `${src}-rt${i + 1}`, text: a.text, source: src, mutation: a.mutation, label: null,
+    note: "red-team rewrite: label it BLIND with tools/label.py before adding to the eval set" }));
+  download(`overkill-redteam-${src}.jsonl`, `${lines.join("\n")}\n`, "application/jsonl");
+}
+
+/* ------------------------------------------------------------------ theme + wiring */
+const THEMES = [
+  { id: "light", name: "Daylight", mode: "light", sw: ["#fcfcfb", "#1c5cab"] },
+  { id: "dark", name: "Midnight", mode: "dark", sw: ["#1a1a19", "#6da7ec"] },
+  { id: "aurora", name: "Aurora", mode: "dark", sw: ["#14121f", "#a78bfa"] },
+  { id: "terminal", name: "Terminal", mode: "dark", sw: ["#0d1110", "#3ddc84"] },
+  { id: "paper", name: "Paper", mode: "light", sw: ["#fbf8f1", "#9a3412"] },
+];
+function setTheme(id, persist = true) {
+  const t = THEMES.find((x) => x.id === id) || THEMES[matchMedia("(prefers-color-scheme: dark)").matches ? 1 : 0];
+  document.documentElement.dataset.theme = t.id;
+  document.documentElement.dataset.mode = t.mode;
+  if (persist) store("theme", t.id);
+  const n = $("#themeName"); if (n) n.textContent = t.name;
+  $$("#themeMenu [data-theme]").forEach((b) => b.setAttribute("aria-checked", b.dataset.theme === t.id));
+  if (state.cases.length) renderCharts();
+}
+function initTheme() {
+  setTheme(load("theme", null), false);
+  const menu = $("#themeMenu");
+  if (menu) menu.innerHTML = THEMES.map((t) => `<button role="menuitemradio" data-theme="${t.id}" aria-checked="false"><span class="swatch" style="background:linear-gradient(135deg,${t.sw[0]} 50%,${t.sw[1]} 50%)"></span>${t.name}<span class="muted small">${t.mode}</span></button>`).join("");
+  setTheme(document.documentElement.dataset.theme, false);
+}
+function cycleTheme() {
+  const i = THEMES.findIndex((t) => t.id === document.documentElement.dataset.theme);
+  setTheme(THEMES[(i + 1) % THEMES.length].id);
 }
 function wire() {
-  $("#themeBtn").addEventListener("click", toggleTheme);
+  $("#themeBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const m = $("#themeMenu"); m.hidden = !m.hidden; $("#themeBtn").setAttribute("aria-expanded", !m.hidden);
+  });
+  $("#themeMenu").addEventListener("click", (e) => { const b = e.target.closest("[data-theme]"); if (b) { setTheme(b.dataset.theme); $("#themeMenu").hidden = true; } });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".theme-wrap")) $("#themeMenu").hidden = true; });
+  $("#redteamBtn").addEventListener("click", () => { if (!AP.on) redTeam(); });
+  $("#redteam").addEventListener("click", (e) => { if (e.target.closest("#rtExport")) exportAttack(); });
   $("#autoBtn").addEventListener("click", () => (AP.on ? stopAutopilot(true) : startAutopilot()));
   $("#apClose").addEventListener("click", () => (AP.on ? stopAutopilot(true) : ($("#apLog").hidden = true)));
   $("#speed").addEventListener("change", (e) => (AP.speed = +e.target.value));
@@ -878,6 +1047,7 @@ function wire() {
     if (e.key === "Escape" && AP.on) stopAutopilot(true);
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
     if (!typing && (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"))) { e.preventDefault(); openSearch(); }
+    if (!typing && !e.metaKey && !e.ctrlKey && e.key.toLowerCase() === "t") cycleTheme();
   });
   document.addEventListener("click", (e) => {
     const cp = e.target.closest("[data-copy]");

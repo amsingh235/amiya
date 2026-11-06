@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .base import CATEGORIES, CATEGORY_NAMES, MODEL, Pipeline, Result
 
-PIPELINE_IDS = ["rules", "single", "rag", "agents"]
+PIPELINE_IDS = ["rules", "single", "rag", "agents", "cascade"]  # cascade = model-mix experiment, off the ladder
 
 
 def get_pipeline(pid: str, **kwargs) -> Pipeline:
@@ -19,6 +19,9 @@ def get_pipeline(pid: str, **kwargs) -> Pipeline:
     if pid == "agents":
         from .agents import AgentsPipeline
         return AgentsPipeline(**kwargs)
+    if pid == "cascade":
+        from .cascade import CascadePipeline
+        return CascadePipeline(**kwargs)
     raise KeyError(f"unknown pipeline {pid!r}; choose from {PIPELINE_IDS}")
 
 

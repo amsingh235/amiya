@@ -21,11 +21,12 @@
       <span class="chips" id="chips"></span>
     </div>
     <nav class="nav" aria-label="Sections">
-      <a href="#ladder">Results</a><a href="#tco">Cost model</a><a href="#errors">Failure modes</a><a href="#ops">Console</a><a href="#method">Method</a>
+      <a href="#ladder">Results</a><a href="#tco">Cost model</a><a href="#errors">Failure modes</a><a href="#ops">Console</a><a href="#critic">Critic</a><a href="#method">Method</a><a href="tutorial.html" class="nav-cta">Tutorial</a>
     </nav>
     <div class="actions">
       <button class="icon-btn" id="searchBtn" title="Search policy and cases (/)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><kbd>/</kbd></button>
-      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <div class="theme-wrap"><button class="icon-btn" id="themeBtn" title="Themes (T)" aria-label="Choose theme" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg><span class="theme-name" id="themeName"></span></button>
+        <div class="theme-menu" id="themeMenu" role="menu" hidden></div></div>
       <button class="autopilot-toggle" id="autoBtn" role="switch" aria-checked="false" title="Autopilot: the agent takes the mouse and operates this console">
         <span class="ap-dot"></span><span class="ap-label">Autopilot</span><span class="ap-sub">computer-use</span><span class="ap-switch"><span></span></span>
       </button>
@@ -39,6 +40,7 @@
       <p class="lede">A rules engine, one LLM call, retrieval over written policy, and a three-agent graph classify the same hand-written disputes. One harness times every call and prices every token. The question is never “can AI do it” but <em>where the next step of sophistication pays for itself</em>.</p>
       <div class="finding" id="finding" aria-live="polite"></div>
       <div class="banner" id="seedBanner" hidden></div>
+      <div class="hero-ctas"><a class="btn primary" href="tutorial.html">Start the tutorial →</a><a class="btn" href="#ops">Try the console</a><span class="muted small">or press <kbd>T</kbd> to change theme · <kbd>/</kbd> to search</span></div>
     </section>
 
     <section class="block" id="ladder" aria-labelledby="ladderTitle">
@@ -47,6 +49,7 @@
         <p>Held-out test split. Each step up should earn its cost. <span class="muted">Tuning happens on the dev split only.</span></p>
       </div>
       <div class="ladder" id="ladderCards"></div>
+      <div class="beyond" id="beyond"></div>
     </section>
 
     <section class="block grid-2" id="tradeoff">
@@ -101,6 +104,14 @@
       </div>
     </section>
 
+    <section class="block" id="critic" aria-labelledby="criticTitle">
+      <div class="block-head">
+        <h2 id="criticTitle">The skeptical reviewer</h2>
+        <p>Every check an interviewer or a client's CTO would run against these numbers, computed live from <code>results.json</code>. Fix the reds before you quote anything.</p>
+      </div>
+      <div class="critic" id="criticBox"></div>
+    </section>
+
     <section class="block" id="ops" aria-labelledby="opsTitle">
       <div class="block-head">
         <h2 id="opsTitle">Operations console</h2>
@@ -119,9 +130,11 @@
           <div class="bench-actions">
             <button class="btn" id="searchPolicyBtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>Search policy</button>
             <button class="btn primary" id="runBtn"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>Run all four</button>
+            <button class="btn redteam" id="redteamBtn" title="Attack this dispute with 8 adversarial rewrites and see which pipeline breaks"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Red-team it</button>
             <span class="gold" id="goldTag"></span>
           </div>
           <div class="lanes" id="lanes"></div>
+          <div class="redteam-board" id="redteam" hidden></div>
           <div class="hits" id="hits"></div>
         </div>
         <div class="pane outbox" id="outbox">

@@ -22,7 +22,7 @@ from pipelines.base import ROOT, TAXONOMY
 from pipelines.llm import DailyLimitReached, MissingKey, load_env
 
 from . import tracing
-from .cost import call_cost, free_tier_limits, pricing_block
+from .cost import call_cost, cost_of, free_tier_limits, pricing_block
 from .data import load_eval
 from .score import cost_stats, latency_stats, summarize
 
@@ -110,7 +110,10 @@ def build_entry(pipe, rows: list[dict], cases: list[dict], meta: dict, path: Pat
         "status": "complete" if len(rows) == len(cases) else "partial",
         "n_scored": len(rows), "n_total": len(cases), "eval_sha": meta["sha"],
         "fingerprint": pipe.fingerprint(), "variant": pipe.variant(), "run_at": now_iso(),
-        "model": MODEL if pipe.uses_llm else None,
+        "model": " + ".join(cfg["models"]) if "models" in cfg else (MODEL if pipe.uses_llm else None),
+        "comparable": getattr(pipe, "comparable", True),
+        "escalation_rate": (round(sum(1 for r in rows if (r.get("meta") or {}).get("escalated")) / len(rows), 4)
+                            if any("escalated" in (r.get("meta") or {}) for r in rows) else None),
         "headline_split": "test",
         "metrics": {"all": summarize(rows, gold), "test": summarize(by_split["test"], gold),
                     "dev": summarize(by_split["dev"], gold)},
@@ -208,7 +211,7 @@ def run_pipeline(pid: str, *, split: str = "all", limit: int | None = None, fres
             row = {"id": case["id"], "text_sha": text_sha(case["text"]), "fp": fp, "variant": variant,
                    "pred": res.label, "abstain_reason": res.abstain_reason,
                    "tokens_in": res.tokens_in, "tokens_out": res.tokens_out, "tokens_cached": res.tokens_cached,
-                   "calls": res.calls, "cost_usd": round(call_cost(res.tokens_in, res.tokens_out, res.tokens_cached), 8),
+                   "calls": res.calls, "cost_usd": round(cost_of(res), 8),
                    "latency_ms": round(latency_ms, 4), "warmup": measured < WARMUP, "session": session,
                    "trace_id": res.trace_id, "meta": res.meta, "ts": now_iso()}
             measured += 1

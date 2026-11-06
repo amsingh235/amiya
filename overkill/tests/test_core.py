@@ -233,3 +233,30 @@ def test_browser_rules_engine_matches_python():
     js_preds = json.loads(subprocess.run(["node", "-e", js], capture_output=True, text=True, check=True).stdout)
     py = get_pipeline("rules")
     assert js_preds == [py.classify(c["text"]).label for c in cases]
+
+
+# ---------------------------------------------------------------- pipeline E: cascade (model-mix experiment)
+def test_cascade_confident_small_model_stops_early():
+    small = FakeTransport(scripted(classify="product_quality", confidence=0.95))
+    big = FakeTransport(scripted(classify="credit_not_processed"))
+    p = get_pipeline("cascade", client=GroqClient(transport=big, sleep=NO_SLEEP),
+                     small_client=GroqClient(model="llama-3.1-8b-instant", transport=small, sleep=NO_SLEEP),
+                     retriever=Retriever(mode="bm25"))
+    r = p.classify("The kettle arrived cracked.")
+    assert r.label == "product_quality" and r.calls == 1 and not r.meta["escalated"]
+    assert len(big.bodies) == 0 and small.bodies[0]["model"] == "llama-3.1-8b-instant"
+
+
+def test_cascade_escalates_and_prices_each_model_separately():
+    from harness.cost import cost_of
+    small = FakeTransport(scripted(classify="product_quality", confidence=0.4))
+    big = FakeTransport(scripted(classify="credit_not_processed"))
+    p = get_pipeline("cascade", client=GroqClient(transport=big, sleep=NO_SLEEP),
+                     small_client=GroqClient(model="llama-3.1-8b-instant", transport=small, sleep=NO_SLEEP),
+                     retriever=Retriever(mode="bm25"))
+    r = p.classify("Returned it, refund promised, nothing yet.")
+    assert r.label == "credit_not_processed" and r.calls == 2 and r.meta["escalated"]
+    assert big.bodies[0]["model"] == "llama-3.3-70b-versatile"
+    expected = (500 * 0.05 + 40 * 0.08) / 1e6 + (500 * 0.59 + 40 * 0.79) / 1e6
+    assert cost_of(r) == pytest.approx(expected)
+    assert p.comparable is False

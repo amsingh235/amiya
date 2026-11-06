@@ -16,7 +16,7 @@ from pipelines import CATEGORY_NAMES, PIPELINE_IDS, get_pipeline
 from pipelines.base import ROOT
 from pipelines.llm import load_env
 
-from .cost import call_cost
+from .cost import cost_of
 from .data import load_eval
 from .run import preflight, read_rows
 
@@ -67,7 +67,7 @@ class Service:
         latency = (time.perf_counter() - t0) * 1000  # harness-owned timing, same as run.py
         return {"pipeline": pipeline, "pred": res.label, "label_name": CATEGORY_NAMES.get(res.label),
                 "abstain_reason": res.abstain_reason, "tokens_in": res.tokens_in, "tokens_out": res.tokens_out,
-                "calls": res.calls, "cost_usd": round(call_cost(res.tokens_in, res.tokens_out, res.tokens_cached), 8),
+                "calls": res.calls, "cost_usd": round(cost_of(res), 8),
                 "latency_ms": round(latency, 3), "meta": res.meta}
 
     def search(self, query: str, k: int = 5) -> dict:

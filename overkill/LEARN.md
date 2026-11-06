@@ -331,6 +331,25 @@ Then ask: *"Use overkill to classify: 'I paid the plumber by transfer and he cha
 
 ---
 
+## 4.11 New in v0.2: critic, red team, cascade, themes, tutorial
+
+- **The skeptical reviewer** (dashboard section *Critic*): every check an interviewer would run, computed live
+  from results.json, with an interview-readiness score. Seed labels = FAIL; overlapping intervals = "inside the
+  noise"; tiny tiers, dev≫test, partial/stale runs, parse errors, stale prices. Fix the reds before quoting numbers.
+- **⚡ Red-team it** (console): attacks the current dispute with 8 rewrites (typo storm, Hinglish code-mix,
+  keyword-free rewording, SMS-speak, ALL-CAPS rage, buried in small talk, wrong stated reason, ten words) and
+  shows which pipeline breaks. Rules run in-browser; with `serve.py` + key the single call is attacked too.
+  **Export as eval drafts** downloads the rewrites *unlabelled*: label them blind before adding them to the set.
+  Autopilot red-teams one paraphrase case per mission.
+- **E · Cascade** (`pipelines/cascade.py`): `llama-3.1-8b-instant` answers first; below `CASCADE_THRESHOLD`
+  confidence it escalates to the 70B + RAG. This is the cheapest agentic routing pattern. It mixes models, so it
+  is marked `comparable=false` and shown *beside* the ladder, never on it (the CLAUDE.md exception).
+  Each model is priced at its own rate ($0.05/$0.08 per 1M for the 8B). Tune the threshold on dev: small-model
+  confidence is poorly calibrated. The question it answers: what share escalates, and does accuracy survive?
+- **Five themes:** Daylight, Midnight, Aurora, Terminal, Paper (press **T** to cycle). Data colours keep the
+  validated ramp of the theme's light/dark mode; themes only restyle surfaces, ink and type.
+- **Tutorial** (`web/tutorial.html`): eight chapters with commands, "check yourself" questions and saved progress.
+
 ## 5. What YOU must write by hand
 
 The project's value is your ability to defend decisions. Claude drafted the following; each is marked

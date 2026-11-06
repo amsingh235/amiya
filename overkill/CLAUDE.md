@@ -5,6 +5,8 @@ The deliverable is the comparison, not the pipelines.
 
 ## Hard constraints
 - One model for all pipelines: llama-3.3-70b-versatile via Groq. Never swap.
+  Sole exception: pipeline E `cascade` (8B first, escalate to 70B) is a labelled model-mix experiment.
+  It is marked comparable=false and must never be presented as part of the four-way comparison.
 - One vector store: pgvector. Do not add another. (The in-memory cosine search in
   `pipelines/retrieval.py` is an offline test double with the same interface, not a second store.)
 - Pipelines return token counts only. The harness owns timing and pricing.

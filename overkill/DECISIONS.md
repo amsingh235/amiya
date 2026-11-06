@@ -41,3 +41,9 @@ One line per real choice. ✍ = a judgement call the owner must revisit and own 
 - Rules engine also runs in-browser from the same rules.toml; a test asserts JS/Python parity on every case.
 - Autopilot drives the real UI (cursor, typing, clicks, outbox filing) with live or recorded results; it never fabricates a lane result. Docks as a sidebar ≥1200px.
 - Cost model uses measured wrong/abstain rates on the test split; error and review costs are user inputs; INR uses lakh/crore ticks.
+
+## v0.2
+- Cascade (E) added as a labelled model-mix experiment (8B → 70B+RAG on low confidence), comparable=false, off the ladder; per-model pricing via usage_by_model. ✍ Threshold 0.85 is a placeholder: tune on dev.
+- Critic section computes its checks from results.json (no hand-written verdicts); score = pass 1, note 0.5, warn/fail 0.
+- Red-team rewrites are deterministic string transforms (no model), so the attack itself costs $0 and is reproducible; rewrites that leave the text unchanged and the "ten words" truncation are not counted.
+- Themes restyle chrome only; series colours stay on the ramp validated for the theme's mode.

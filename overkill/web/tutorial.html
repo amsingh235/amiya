@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overkill tutorial</title>
+  <meta name="description" content="Eight chapters: build an honest four-pipeline AI benchmark, from a blind-labelled eval set to a deployed dashboard and a client offer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>try{var t=JSON.parse(localStorage.getItem("overkill.theme")||"null");var m={light:"light",dark:"dark",aurora:"dark",terminal:"dark",paper:"light"};if(!t){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=m[t]||"light"}catch(e){}</script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none"><span class="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 22l5-6 4 4 8-11" /></svg></span><span class="wordmark">Overkill</span><span class="chip keep"><span class="dot"></span>tutorial</span></a>
+    <nav class="nav" aria-label="Back"><a href="index.html">← Dashboard</a><a href="index.html#ops">Console</a><a href="index.html#critic">Critic</a></nav>
+    <div class="actions"><button class="icon-btn" id="cycle" title="Next theme (T)" aria-label="Next theme"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg><span class="theme-name" id="themeName"></span></button></div>
+  </header>
+
+  <main class="tut" id="main">
+    <section class="hero" style="padding-bottom:8px">
+      <p class="eyebrow">Tutorial · 8 chapters · about 5 weeks at 10 h/week</p>
+      <h1>Build an AI benchmark you can <span class="soft">defend.</span></h1>
+      <p class="lede">Each chapter explains one idea, gives you the command, and ends with the question an interviewer will ask. Tick a chapter when you've done it; progress is saved in this browser.</p>
+    </section>
+    <div class="tut-progress"><div class="tut-bar"><i id="bar"></i></div><div class="tut-meta"><span id="progressText">0 of 8 done</span><span id="live">reading results.json…</span></div></div>
+
+    <article class="card chapter" data-ch="1"><header><span class="num">1</span><h2>The question, not the pipelines</h2></header>
+      <p>Four ways to sort payment disputes into nine categories, each more sophisticated and more expensive: a rules engine, one LLM call, RAG, a multi-agent graph. You measure all four on the same set, with the same harness and the same model.</p>
+      <p class="why">The deliverable is the comparison: <i>where does the next step of sophistication pay for itself?</i></p>
+      <details><summary>Check yourself: what's the one sentence this project lets you say?</summary><p>“I'd start with the cheapest thing that could work, measure it against a labelled set, and only escalate where the error cost justifies it. I have the numbers from doing exactly that on dispute triage.”</p></details>
+      <label class="check"><input type="checkbox" /> I can explain the project in two sentences</label></article>
+
+    <article class="card chapter" data-ch="2"><header><span class="num">2</span><h2>Build the eval set first, labelled blind, twice</h2></header>
+      <p>The seed has <b data-k="n">180</b> disputes in four tiers: clear, paraphrase, policy conflict, stated-reason-wrong. They were drafted <i>and labelled by Claude</i>, so they aren't yours yet. Rewrite the definitions, extend toward 420 cases, then label every case blind, again a day later, and freeze.</p>
+      <div class="cmd"><span>python tools/label.py pass1</span><button data-copy="python tools/label.py pass1">copy</button></div>
+      <div class="cmd" style="margin-top:6px"><span>python tools/label.py pass2 &amp;&amp; python tools/label.py agree &amp;&amp; python tools/label.py freeze</span><button data-copy="python tools/label.py pass2 && python tools/label.py agree && python tools/label.py freeze">copy</button></div>
+      <p class="why">Labelling after building pipelines turns a measurement into a certificate. Your self-agreement rate is the ceiling: the dashed line on every accuracy chart.</p>
+      <details><summary>Check yourself: why split dev and test?</summary><p>You tune rules, prompts and k on dev (30%) and report test (70%). Tuning on the numbers you report is overfitting. At about 130 test cases the 95% interval is roughly ±8 points, so smaller differences are noise.</p></details>
+      <label class="check"><input type="checkbox" /> My labels are frozen in data/eval.jsonl</label></article>
+
+    <article class="card chapter" data-ch="3"><header><span class="num">3</span><h2>Rung A: the rules engine</h2></header>
+      <p>Regex per category in <code>pipelines/rules.toml</code>, first match wins, no model. Unmatched disputes go to a human. Right now it scores <b data-k="rules">49.6%</b> on test. Tune it on dev until adding patterns stops helping (about 60% is the honest ceiling).</p>
+      <div class="cmd"><span>python run_eval.py --pipeline rules</span><button data-copy="python run_eval.py --pipeline rules">copy</button></div>
+      <p class="why">Rules match words; disputes are paraphrase. Open the console, press <b>⚡ Red-team it</b>, and watch Hinglish, typos and SMS-speak break the patterns live.</p>
+      <details><summary>Check yourself: why does rules have the highest fixed monthly cost?</summary><p>Someone has to edit rules.toml forever as customers' wording drifts. That maintenance is real money ($400/month in our assumptions), even though each call costs $0.</p></details>
+      <label class="check"><input type="checkbox" /> I tuned rules on dev and wrote the plateau in DECISIONS.md</label></article>
+
+    <article class="card chapter" data-ch="4"><header><span class="num">4</span><h2>Rung B: one LLM call</h2></header>
+      <p>One prompt with the nine definitions, output forced through a tool schema whose category is an enum, so there's no string parsing. Anything outside the enum is counted as a parse error, never guessed. Zero-shot first, few-shot later as a measured delta.</p>
+      <div class="cmd"><span>python run_eval.py -p single --estimate</span><button data-copy="python run_eval.py -p single --estimate">copy</button></div>
+      <div class="cmd" style="margin-top:6px"><span>python run_eval.py -p single --yes</span><button data-copy="python run_eval.py -p single --yes">copy</button></div>
+      <p class="why">The A→B gap is the most valuable number in the project: it tells a client whether AI is worth starting at all. Under 10 points means your eval set is too easy.</p>
+      <details><summary>Check yourself: the free tier stops your run at case 120. What happens?</summary><p>The harness saw the daily-cap 429, checkpointed every finished case to runs/single.jsonl, and stopped. Run the same command tomorrow and it resumes at case 121. Nothing is paid twice.</p></details>
+      <label class="check"><input type="checkbox" /> I have two numbers and the gap between them</label></article>
+
+    <article class="card chapter" data-ch="5"><header><span class="num">5</span><h2>Rung C: RAG over written policy</h2></header>
+      <p>Retrieve the top-k policy rules and put them in the prompt. The corpus is 46 documents chunked <i>by document</i>, one rule each. Hybrid search fuses BM25 (exact terms) with embeddings in pgvector using Reciprocal Rank Fusion. Tune k ∈ {1, 3, 5, 8} on dev.</p>
+      <div class="cmd"><span>pip install fastembed "psycopg[binary]" &amp;&amp; python tools/ingest_pgvector.py</span><button data-copy='pip install fastembed "psycopg[binary]" && python tools/ingest_pgvector.py'>copy</button></div>
+      <div class="cmd" style="margin-top:6px"><span>RAG_K=5 python run_eval.py -p rag --split dev --yes</span><button data-copy="RAG_K=5 python run_eval.py -p rag --split dev --yes">copy</button></div>
+      <details><summary>Check yourself: RAG got a case wrong. What two different things could have happened?</summary><p>Retrieval missed (no retrieved doc spoke about the right category: fix search) or the model ignored good context (fix the prompt). The Failure modes section counts both separately.</p></details>
+      <label class="check"><input type="checkbox" /> I picked k with evidence from the dev split</label></article>
+
+    <article class="card chapter" data-ch="6"><header><span class="num">6</span><h2>Rung D: agents, and E: a small-model cascade</h2></header>
+      <p><b>D:</b> the classifier proposes, the verifier checks the category's qualifying conditions, and the arbiter runs <i>only</i> when the verifier rejects. It can route to a human, so automation rate becomes a third dimension. <b>E</b> is an agentic routing experiment: <code>llama-3.1-8b-instant</code> answers first and escalates to the 70B + RAG only when unsure. It mixes models, so it sits beside the ladder, not on it.</p>
+      <div class="cmd"><span>python run_eval.py -p agents --yes</span><button data-copy="python run_eval.py -p agents --yes">copy</button></div>
+      <div class="cmd" style="margin-top:6px"><span>CASCADE_THRESHOLD=0.85 python run_eval.py -p cascade --split dev --yes</span><button data-copy="CASCADE_THRESHOLD=0.85 python run_eval.py -p cascade --split dev --yes">copy</button></div>
+      <details><summary>Check yourself: what makes D multi-agent rather than a long prompt?</summary><p>The conditional edge: the arbiter only runs on rejection. An unconditional three-call chain costs about 40% more and isn't a system that decides anything. And an 8B model's confidence is poorly calibrated, which is why E's threshold is tuned on dev, not trusted.</p></details>
+      <label class="check"><input type="checkbox" /> I can redraw the agent graph from memory</label></article>
+
+    <article class="card chapter" data-ch="7"><header><span class="num">7</span><h2>Read the dashboard like a skeptic</h2></header>
+      <p>The <b>Skeptical reviewer</b> section audits your results live: seed labels, overlapping intervals, tiny tiers, dev≫test, stale prices. It gives an interview-readiness score out of 100 (<b data-k="critic">see the dashboard</b>). The <b>cost model</b> turns accuracy into money with a client's volume, error cost and review cost (₹ supported). <b>Autopilot</b> operates the console for you: flip it on and watch.</p>
+      <p class="why">Fix every red before you quote a number. Each red is a question you'd lose in an interview.</p>
+      <details><summary>Check yourself: RAG 86% [79–92] vs agents 88% [81–93]. Who wins?</summary><p>Nobody, at this n: the intervals overlap. You say “agents bought about two points for several times the cost, within the noise”, then show where the cost model says that's still worth it.</p></details>
+      <label class="check"><input type="checkbox" /> My critic score has no reds</label></article>
+
+    <article class="card chapter" data-ch="8"><header><span class="num">8</span><h2>Ship it, then sell the method</h2></header>
+      <p>Deploy <code>overkill/web</code> on Vercel (Root Directory = <code>overkill/web</code>, framework “Other”). It's static, so it's never down. Write the README's finding in two sentences. Post the finding weekly, not the build.</p>
+      <p>Then turn it into an <b>AI Build Decision Review</b>: their task, 100–200 cases labelled by their team, cheapest-first benchmark, cost model with their numbers, a one-page recommendation and this dashboard as the live artifact.</p>
+      <details><summary>Check yourself: a founder asks what you'd build for them.</summary><p>“The cheapest thing that could work, measured against your labelled cases, escalating only where your error cost pays for it. Here's the dashboard from doing exactly that on dispute triage.” Price against the overbuild you prevent, not your hours.</p></details>
+      <label class="check"><input type="checkbox" /> The dashboard is live and the README carries the argument</label></article>
+  </main>
+
+  <footer class="foot"><span>Overkill · tutorial</span><a href="index.html">Back to the dashboard →</a></footer>
+
+  <script>
+    (() => {
+      const THEMES = [["light", "Daylight", "light"], ["dark", "Midnight", "dark"], ["aurora", "Aurora", "dark"], ["terminal", "Terminal", "dark"], ["paper", "Paper", "light"]];
+      const get = (k, d) => { try { const v = localStorage.getItem("overkill." + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+      const put = (k, v) => { try { localStorage.setItem("overkill." + k, JSON.stringify(v)); } catch (e) { /* blocked */ } };
+      const name = () => (THEMES.find((t) => t[0] === document.documentElement.dataset.theme) || THEMES[0])[1];
+      const nameEl = document.getElementById("themeName");
+      nameEl.textContent = name();
+      const cycle = () => {
+        const i = THEMES.findIndex((t) => t[0] === document.documentElement.dataset.theme), t = THEMES[(i + 1) % THEMES.length];
+        document.documentElement.dataset.theme = t[0]; document.documentElement.dataset.mode = t[2]; put("theme", t[0]); nameEl.textContent = t[1];
+      };
+      document.getElementById("cycle").addEventListener("click", cycle);
+      document.addEventListener("keydown", (e) => { if (e.key.toLowerCase() === "t" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) cycle(); });
+      const done = get("tutorial", {});
+      const boxes = [...document.querySelectorAll(".chapter")];
+      const paint = () => {
+        const n = boxes.filter((c) => done[c.dataset.ch]).length;
+        boxes.forEach((c) => { c.classList.toggle("done", !!done[c.dataset.ch]); c.querySelector(".check input").checked = !!done[c.dataset.ch]; });
+        document.getElementById("bar").style.width = (100 * n / boxes.length) + "%";
+        document.getElementById("progressText").textContent = n + " of " + boxes.length + " done";
+      };
+      boxes.forEach((c) => c.querySelector(".check input").addEventListener("change", (e) => { done[c.dataset.ch] = e.target.checked; put("tutorial", done); paint(); }));
+      paint();
+      document.addEventListener("click", (e) => { const b = e.target.closest("[data-copy]"); if (b) { navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy); b.textContent = "copied"; setTimeout(() => (b.textContent = "copy"), 1200); } });
+      fetch("results.json", { cache: "no-cache" }).then((r) => r.json()).then((r) => {
+        const pct = (x) => (x == null ? "—" : (x * 100).toFixed(1) + "%");
+        const set = (k, v) => document.querySelectorAll('[data-k="' + k + '"]').forEach((el) => (el.textContent = v));
+        set("n", r.eval_set.n);
+        if (r.pipelines.rules) set("rules", pct(r.pipelines.rules.metrics.test.accuracy));
+        const ran = Object.keys(r.pipelines).filter((p) => p !== "cascade").length;
+        document.getElementById("live").textContent = "live from results.json · " + ran + " of 4 rungs measured · eval set: " + r.eval_set.status;
+        set("critic", r.eval_set.status === "frozen-human" ? "check the dashboard" : "low while the labels are still a seed");
+      }).catch(() => { document.getElementById("live").textContent = "results.json not found (run the harness)"; });
+    })();
+  </script>
+</body>
+</html>
